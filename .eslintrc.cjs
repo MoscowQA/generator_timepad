@@ -1,0 +1,1 @@
+// This file was replaced by eslint.config.js (ESLint Flat Config)
