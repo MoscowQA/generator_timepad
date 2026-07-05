@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { EventData, SpeakerData } from './types';
 import { ImageCropper } from './components/ImageCropper';
+import { AttendeeCheckIn } from './components/checkin/AttendeeCheckIn';
+
+type AppMode = 'announce' | 'checkin';
 
 // Extend SpeakerData for frontend state
 interface FormSpeakerData extends SpeakerData {
@@ -152,6 +155,7 @@ function App() {
   });
 
   const [htmlResult, setHtmlResult] = useState<string>('');
+  const [mode, setMode] = useState<AppMode>('announce');
 
   // State for crop modal
   const [croppingSpeakerIndex, setCroppingSpeakerIndex] = useState<number | null>(null);
@@ -262,326 +266,365 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">Генератор Анонсов Митапов</h1>
+        <h1 className="text-2xl font-bold mb-2 text-gray-800">
+          {mode === 'announce' ? 'Генератор Анонсов Митапов' : 'Контроль входа'}
+        </h1>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Дата</label>
-              <input
-                {...register('date', { required: true })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                placeholder="Например: 15 сентября"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Партнеры</label>
-              <input
-                {...register('partners', { required: true })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                placeholder="VK, Яндекс"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Название митапа</label>
-              <input
-                {...register('eventName', { required: true })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                placeholder="Moscow QA Meetup"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Адрес площадки</label>
-              <input
-                {...register('locationAddress', { required: true })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                placeholder="Москва, ул. Льва Толстого, 16"
-              />
-            </div>
-          </div>
+        {/* Переключатель режимов */}
+        <div className="mb-6 inline-flex rounded-lg bg-gray-100 p-1">
+          <button
+            type="button"
+            onClick={() => setMode('announce')}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${
+              mode === 'announce' ? 'bg-white text-gray-900 shadow' : 'text-gray-500'
+            }`}
+          >
+            Анонс
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('checkin')}
+            className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${
+              mode === 'checkin' ? 'bg-white text-gray-900 shadow' : 'text-gray-500'
+            }`}
+          >
+            Проход на мероприятие
+          </button>
+        </div>
 
-          {/* Timing */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Тайминг</h2>
-              <button
-                type="button"
-                onClick={() =>
-                  appendTiming({ timeStart: '', timeEnd: '', activity: '', speaker: '' })
-                }
-                className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md hover:bg-blue-100"
-              >
-                Добавить пункт
-              </button>
-            </div>
-            <div className="space-y-3">
-              {timingFields.map((field, index) => (
-                <div key={field.id} className="flex gap-2 items-start">
+        {mode === 'checkin' && <AttendeeCheckIn />}
+
+        {mode === 'announce' && (
+          <>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Дата</label>
                   <input
-                    {...register(`timing.${index}.timeStart` as const, { required: true })}
-                    className="w-24 border rounded p-2"
-                    placeholder="19:00"
+                    {...register('date', { required: true })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                    placeholder="Например: 15 сентября"
                   />
-                  <span className="mt-2">-</span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Партнеры</label>
                   <input
-                    {...register(`timing.${index}.timeEnd` as const, { required: true })}
-                    className="w-24 border rounded p-2"
-                    placeholder="19:30"
+                    {...register('partners', { required: true })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                    placeholder="VK, Яндекс"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Название митапа</label>
                   <input
-                    {...register(`timing.${index}.activity` as const, { required: true })}
-                    className="flex-1 border rounded p-2"
-                    placeholder="Сбор гостей"
+                    {...register('eventName', { required: true })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                    placeholder="Moscow QA Meetup"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Адрес площадки</label>
+                  <input
+                    {...register('locationAddress', { required: true })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                    placeholder="Москва, ул. Льва Толстого, 16"
+                  />
+                </div>
+              </div>
 
-                  {/* Select speaker from the added speakers list */}
-                  <select
-                    {...register(`timing.${index}.speaker` as const)}
-                    className="flex-1 border rounded p-2 bg-white text-gray-700"
-                  >
-                    <option value="">Без спикера</option>
-                    {speakersWatch.map(
-                      (speaker, sIndex) =>
-                        speaker.name && (
-                          <option key={sIndex} value={speaker.name}>
-                            {speaker.name}
-                          </option>
-                        )
-                    )}
-                  </select>
-
+              {/* Timing */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800">Тайминг</h2>
                   <button
                     type="button"
-                    onClick={() => removeTiming(index)}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded"
+                    onClick={() =>
+                      appendTiming({ timeStart: '', timeEnd: '', activity: '', speaker: '' })
+                    }
+                    className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md hover:bg-blue-100"
                   >
-                    ✕
+                    Добавить пункт
                   </button>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="space-y-3">
+                  {timingFields.map((field, index) => (
+                    <div key={field.id} className="flex gap-2 items-start">
+                      <input
+                        {...register(`timing.${index}.timeStart` as const, { required: true })}
+                        className="w-24 border rounded p-2"
+                        placeholder="19:00"
+                      />
+                      <span className="mt-2">-</span>
+                      <input
+                        {...register(`timing.${index}.timeEnd` as const, { required: true })}
+                        className="w-24 border rounded p-2"
+                        placeholder="19:30"
+                      />
+                      <input
+                        {...register(`timing.${index}.activity` as const, { required: true })}
+                        className="flex-1 border rounded p-2"
+                        placeholder="Сбор гостей"
+                      />
 
-          {/* Speakers */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Доклады / Спикеры</h2>
-              {!isAddingSpeaker && (
-                <button
-                  type="button"
-                  onClick={() => setIsAddingSpeaker(true)}
-                  className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md hover:bg-blue-100"
-                >
-                  Добавить спикера
-                </button>
-              )}
-            </div>
-
-            {/* List of added speakers (collapsed view) */}
-            <div className="space-y-4 mb-6">
-              {speakerFields.map((field, index) => {
-                const speaker = speakersWatch[index];
-                return (
-                  <div
-                    key={field.id}
-                    className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex justify-between items-center"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 border flex items-center justify-center">
-                        {speaker?.photoFileUrl ? (
-                          <img
-                            src={speaker.photoFileUrl}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-[10px] text-gray-500 text-center">Нет</span>
+                      {/* Select speaker from the added speakers list */}
+                      <select
+                        {...register(`timing.${index}.speaker` as const)}
+                        className="flex-1 border rounded p-2 bg-white text-gray-700"
+                      >
+                        <option value="">Без спикера</option>
+                        {speakersWatch.map(
+                          (speaker, sIndex) =>
+                            speaker.name && (
+                              <option key={sIndex} value={speaker.name}>
+                                {speaker.name}
+                              </option>
+                            )
                         )}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => removeTiming(index)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Speakers */}
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800">Доклады / Спикеры</h2>
+                  {!isAddingSpeaker && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingSpeaker(true)}
+                      className="text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-md hover:bg-blue-100"
+                    >
+                      Добавить спикера
+                    </button>
+                  )}
+                </div>
+
+                {/* List of added speakers (collapsed view) */}
+                <div className="space-y-4 mb-6">
+                  {speakerFields.map((field, index) => {
+                    const speaker = speakersWatch[index];
+                    return (
+                      <div
+                        key={field.id}
+                        className="border border-gray-200 rounded-lg p-4 bg-gray-50 flex justify-between items-center"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 border flex items-center justify-center">
+                            {speaker?.photoFileUrl ? (
+                              <img
+                                src={speaker.photoFileUrl}
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-[10px] text-gray-500 text-center">Нет</span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">
+                              {speaker.name || 'Без имени'}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {speaker.reportTitle || 'Без темы'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeSpeaker(index)}
+                          className="text-red-500 hover:text-red-700 text-sm"
+                        >
+                          Удалить
+                        </button>
+
+                        {/* Hidden inputs to keep react-hook-form happy since we don't display the full form here */}
+                        <input type="hidden" {...register(`speakers.${index}.name` as const)} />
+                        <input type="hidden" {...register(`speakers.${index}.jobTitle` as const)} />
+                        <input
+                          type="hidden"
+                          {...register(`speakers.${index}.reportTitle` as const)}
+                        />
+                        <input
+                          type="hidden"
+                          {...register(`speakers.${index}.reportDescription` as const)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Draft Speaker Form */}
+                {isAddingSpeaker && (
+                  <div className="border-2 border-blue-200 rounded-lg p-6 bg-blue-50 relative mb-6">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingSpeaker(false)}
+                      className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-sm"
+                    >
+                      ✕ Отмена
+                    </button>
+                    <h3 className="font-semibold mb-4 text-blue-800">Новый спикер</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2 flex items-center gap-4">
+                        <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 border flex items-center justify-center">
+                          {draftSpeaker.photoFileUrl ? (
+                            <img
+                              src={draftSpeaker.photoFileUrl}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-xs text-gray-500 text-center">Нет фото</span>
+                          )}
+                        </div>
+                        <div>
+                          <label className="cursor-pointer bg-white border border-gray-300 px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Загрузить фото
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={onDraftFileChange}
+                            />
+                          </label>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Идеально 1:1, будет обрезано в круг
+                          </p>
+                        </div>
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-800">{speaker.name || 'Без имени'}</p>
-                        <p className="text-sm text-gray-600">{speaker.reportTitle || 'Без темы'}</p>
+                        <label
+                          htmlFor="speaker-name"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Имя спикера
+                        </label>
+                        <input
+                          id="speaker-name"
+                          value={draftSpeaker.name}
+                          onChange={e => setDraftSpeaker({ ...draftSpeaker, name: e.target.value })}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="speaker-jobTitle"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Должность и компания
+                        </label>
+                        <input
+                          id="speaker-jobTitle"
+                          value={draftSpeaker.jobTitle}
+                          onChange={e =>
+                            setDraftSpeaker({ ...draftSpeaker, jobTitle: e.target.value })
+                          }
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label
+                          htmlFor="speaker-reportTitle"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Тема доклада
+                        </label>
+                        <input
+                          id="speaker-reportTitle"
+                          value={draftSpeaker.reportTitle}
+                          onChange={e =>
+                            setDraftSpeaker({ ...draftSpeaker, reportTitle: e.target.value })
+                          }
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label
+                          htmlFor="speaker-reportDescription"
+                          className="block text-sm font-medium text-gray-700"
+                        >
+                          Описание доклада
+                        </label>
+                        <textarea
+                          id="speaker-reportDescription"
+                          value={draftSpeaker.reportDescription}
+                          onChange={e =>
+                            setDraftSpeaker({ ...draftSpeaker, reportDescription: e.target.value })
+                          }
+                          rows={3}
+                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                        ></textarea>
+                      </div>
+
+                      <div className="md:col-span-2 flex justify-end mt-2">
+                        <button
+                          type="button"
+                          onClick={handleSaveDraftSpeaker}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
+                        >
+                          ✓ Сохранить спикера
+                        </button>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removeSpeaker(index)}
-                      className="text-red-500 hover:text-red-700 text-sm"
-                    >
-                      Удалить
-                    </button>
-
-                    {/* Hidden inputs to keep react-hook-form happy since we don't display the full form here */}
-                    <input type="hidden" {...register(`speakers.${index}.name` as const)} />
-                    <input type="hidden" {...register(`speakers.${index}.jobTitle` as const)} />
-                    <input type="hidden" {...register(`speakers.${index}.reportTitle` as const)} />
-                    <input
-                      type="hidden"
-                      {...register(`speakers.${index}.reportDescription` as const)}
-                    />
                   </div>
-                );
-              })}
-            </div>
+                )}
+              </div>
 
-            {/* Draft Speaker Form */}
-            {isAddingSpeaker && (
-              <div className="border-2 border-blue-200 rounded-lg p-6 bg-blue-50 relative mb-6">
+              <div className="flex justify-end pt-4 border-t">
                 <button
-                  type="button"
-                  onClick={() => setIsAddingSpeaker(false)}
-                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-sm"
+                  type="submit"
+                  className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 text-lg shadow-sm"
                 >
-                  ✕ Отмена
+                  Сгенерировать HTML и скачать фото
                 </button>
-                <h3 className="font-semibold mb-4 text-blue-800">Новый спикер</h3>
+              </div>
+            </form>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2 flex items-center gap-4">
-                    <div className="w-24 h-24 rounded-full bg-gray-200 overflow-hidden flex-shrink-0 border flex items-center justify-center">
-                      {draftSpeaker.photoFileUrl ? (
-                        <img
-                          src={draftSpeaker.photoFileUrl}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-xs text-gray-500 text-center">Нет фото</span>
-                      )}
-                    </div>
-                    <div>
-                      <label className="cursor-pointer bg-white border border-gray-300 px-4 py-2 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Загрузить фото
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={onDraftFileChange}
-                        />
-                      </label>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Идеально 1:1, будет обрезано в круг
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="speaker-name"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Имя спикера
-                    </label>
-                    <input
-                      id="speaker-name"
-                      value={draftSpeaker.name}
-                      onChange={e => setDraftSpeaker({ ...draftSpeaker, name: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="speaker-jobTitle"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Должность и компания
-                    </label>
-                    <input
-                      id="speaker-jobTitle"
-                      value={draftSpeaker.jobTitle}
-                      onChange={e => setDraftSpeaker({ ...draftSpeaker, jobTitle: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label
-                      htmlFor="speaker-reportTitle"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Тема доклада
-                    </label>
-                    <input
-                      id="speaker-reportTitle"
-                      value={draftSpeaker.reportTitle}
-                      onChange={e =>
-                        setDraftSpeaker({ ...draftSpeaker, reportTitle: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label
-                      htmlFor="speaker-reportDescription"
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      Описание доклада
-                    </label>
-                    <textarea
-                      id="speaker-reportDescription"
-                      value={draftSpeaker.reportDescription}
-                      onChange={e =>
-                        setDraftSpeaker({ ...draftSpeaker, reportDescription: e.target.value })
-                      }
-                      rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
-                    ></textarea>
-                  </div>
+            {/* Result Section */}
+            {htmlResult && (
+              <div className="mt-12 border-t pt-8">
+                <h2 className="text-2xl font-bold mb-4">Результат</h2>
 
-                  <div className="md:col-span-2 flex justify-end mt-2">
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-medium text-gray-800">HTML Код</h3>
                     <button
-                      type="button"
-                      onClick={handleSaveDraftSpeaker}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
+                      onClick={copyToClipboard}
+                      className="text-sm bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
                     >
-                      ✓ Сохранить спикера
+                      Скопировать
                     </button>
                   </div>
+                  <textarea
+                    readOnly
+                    value={htmlResult}
+                    rows={10}
+                    className="w-full font-mono text-sm p-4 bg-gray-50 border rounded-lg focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-2">Превью</h3>
+                  <div
+                    className="border rounded-lg p-6 bg-white prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: htmlResult }}
+                  />
                 </div>
               </div>
             )}
-          </div>
-
-          <div className="flex justify-end pt-4 border-t">
-            <button
-              type="submit"
-              className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 text-lg shadow-sm"
-            >
-              Сгенерировать HTML и скачать фото
-            </button>
-          </div>
-        </form>
-
-        {/* Result Section */}
-        {htmlResult && (
-          <div className="mt-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-4">Результат</h2>
-
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-lg font-medium text-gray-800">HTML Код</h3>
-                <button
-                  onClick={copyToClipboard}
-                  className="text-sm bg-gray-100 px-3 py-1 rounded hover:bg-gray-200"
-                >
-                  Скопировать
-                </button>
-              </div>
-              <textarea
-                readOnly
-                value={htmlResult}
-                rows={10}
-                className="w-full font-mono text-sm p-4 bg-gray-50 border rounded-lg focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">Превью</h3>
-              <div
-                className="border rounded-lg p-6 bg-white prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: htmlResult }}
-              />
-            </div>
-          </div>
+          </>
         )}
       </div>
 
