@@ -385,7 +385,7 @@ export const AttendeeCheckIn: React.FC = () => {
                     onClick={confirmSkip}
                     className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700"
                   >
-                    Пропустить
+                    Скипнуть
                   </button>
                 </div>
               </div>
