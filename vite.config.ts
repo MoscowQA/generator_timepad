@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import { fileURLToPath, URL } from 'node:url'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -8,5 +9,11 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  resolve: {
+    alias: {
+      // Совпадает с paths."@/*" в tsconfig.json
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
   base: './', // Делает пути относительными для корректной работы на GitHub Pages
 })

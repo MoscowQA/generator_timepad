@@ -1,0 +1,759 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Timepad API",
+    "version": "1.0.0",
+    "description": "OpenAPI-описание публичного API Timepad (https://dev.timepad.ru/api/).\nСпецификация восстановлена по официальному swagger-сгенерированному SDK\n(https://github.com/timepad/timepad-sdk-php) и служит источником истины для\nавтогенерации типизированного TypeScript-клиента.\n\nАутентификация: OAuth2 Bearer-токен в заголовке `Authorization: Bearer <token>`.\nПолучить токен и клиентские данные можно в личном кабинете организатора."
+  },
+  "servers": [
+    { "url": "https://api.timepad.ru", "description": "Production" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "auth", "description": "Авторизация и информация о токене" },
+    { "name": "events", "description": "События" },
+    { "name": "orders", "description": "Заказы (регистрации)" },
+    { "name": "organizations", "description": "Организации" },
+    { "name": "webhooks", "description": "Webhook'и организации" }
+  ],
+  "paths": {
+    "/introspect": {
+      "get": {
+        "tags": ["auth"],
+        "operationId": "introspectToken",
+        "summary": "Информация о владельце токена",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": false,
+            "description": "Токен (безопаснее передавать в заголовке Authorization)",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Introspect" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "tags": ["events"],
+        "operationId": "getEvents",
+        "summary": "Поиск и список событий",
+        "parameters": [
+          { "name": "fields", "in": "query", "description": "Список полей, которые нужно вывести", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "limit", "in": "query", "description": "Сколько элементов списка вывести", "schema": { "type": "integer" } },
+          { "name": "skip", "in": "query", "description": "С какого элемента списка начать вывод", "schema": { "type": "integer" } },
+          { "name": "sort", "in": "query", "description": "Поля сортировки (напр. +starts_at, -created_at)", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "category_ids", "in": "query", "description": "Категории, к которым принадлежат события", "schema": { "type": "array", "items": { "type": "integer" } } },
+          { "name": "category_ids_exclude", "in": "query", "schema": { "type": "array", "items": { "type": "integer" } } },
+          { "name": "cities", "in": "query", "description": "Города, события из которых выводить", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "cities_exclude", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "organization_ids", "in": "query", "schema": { "type": "array", "items": { "type": "integer" } } },
+          { "name": "organization_ids_exclude", "in": "query", "schema": { "type": "array", "items": { "type": "integer" } } },
+          { "name": "event_ids", "in": "query", "schema": { "type": "array", "items": { "type": "integer" } } },
+          { "name": "event_ids_exclude", "in": "query", "schema": { "type": "array", "items": { "type": "integer" } } },
+          { "name": "keywords", "in": "query", "description": "Слова в названии или описании", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "keywords_exclude", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "access_statuses", "in": "query", "description": "Режимы доступа: private, draft, link_only, public. Доступно только организаторам", "schema": { "type": "array", "items": { "type": "string", "enum": ["private", "draft", "link_only", "public"] } } },
+          { "name": "moderation_statuses", "in": "query", "description": "Уровни качества: featured, shown, hidden, not_moderated", "schema": { "type": "array", "items": { "type": "string", "enum": ["featured", "shown", "hidden", "not_moderated"] } } },
+          { "name": "price_min", "in": "query", "schema": { "type": "integer" } },
+          { "name": "price_max", "in": "query", "schema": { "type": "integer" } },
+          { "name": "starts_at_min", "in": "query", "description": "Событие начинается не раньше указанной даты", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "starts_at_max", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "created_at_min", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "created_at_max", "in": "query", "schema": { "type": "string", "format": "date-time" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventsResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["events"],
+        "operationId": "addEvent",
+        "summary": "Создать событие",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateEvent" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Созданное событие",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events/{event_id}": {
+      "parameters": [
+        { "name": "event_id", "in": "path", "required": true, "description": "Номер события", "schema": { "type": "integer" } }
+      ],
+      "get": {
+        "tags": ["events"],
+        "operationId": "getSingleEvent",
+        "summary": "Информация о событии",
+        "parameters": [
+          { "name": "fields", "in": "query", "description": "Список полей, которые нужно вывести", "schema": { "type": "array", "items": { "type": "string" } } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["events"],
+        "operationId": "editEvent",
+        "summary": "Редактировать событие",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EditEvent" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Обновлённое событие",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/EventResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events/{event_id}/orders": {
+      "parameters": [
+        { "name": "event_id", "in": "path", "required": true, "description": "Номер события", "schema": { "type": "integer" } }
+      ],
+      "get": {
+        "tags": ["orders"],
+        "operationId": "getEventOrders",
+        "summary": "Список заказов события",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } },
+          { "name": "skip", "in": "query", "schema": { "type": "integer" } },
+          { "name": "fields", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegistrationOrdersResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["orders"],
+        "operationId": "addOrder",
+        "summary": "Создать заказ (регистрацию)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateOrder" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Созданный заказ",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegistrationOrderResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/events/{event_id}/orders/{order_id}": {
+      "parameters": [
+        { "name": "event_id", "in": "path", "required": true, "schema": { "type": "integer" } },
+        { "name": "order_id", "in": "path", "required": true, "schema": { "type": "integer" } }
+      ],
+      "get": {
+        "tags": ["orders"],
+        "operationId": "getSingleEventOrder",
+        "summary": "Информация о заказе",
+        "parameters": [
+          { "name": "fields", "in": "query", "schema": { "type": "array", "items": { "type": "string" } } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegistrationOrderResponse" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["orders"],
+        "operationId": "editEventOrder",
+        "summary": "Изменить заказ",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EditOrder" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Обновлённый заказ",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RegistrationOrderResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations": {
+      "post": {
+        "tags": ["organizations"],
+        "operationId": "addOrganization",
+        "summary": "Создать организацию",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateOrganization" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Созданная организация",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrganizationResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{organization_id}/hooks": {
+      "parameters": [
+        { "name": "organization_id", "in": "path", "required": true, "description": "Идентификатор организации", "schema": { "type": "integer" } }
+      ],
+      "get": {
+        "tags": ["webhooks"],
+        "operationId": "getHooks",
+        "summary": "Список webhook'ов организации",
+        "parameters": [
+          { "name": "type", "in": "query", "description": "Тип получаемых webhook'ов", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhooksApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["webhooks"],
+        "operationId": "addHook",
+        "summary": "Добавить webhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateHook" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhooksApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/organizations/{organization_id}/hooks/{hook_id}": {
+      "parameters": [
+        { "name": "organization_id", "in": "path", "required": true, "schema": { "type": "integer" } },
+        { "name": "hook_id", "in": "path", "required": true, "description": "Идентификатор webhook'а", "schema": { "type": "integer" } }
+      ],
+      "get": {
+        "tags": ["webhooks"],
+        "operationId": "getHook",
+        "summary": "Информация о webhook'е",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookApiResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["webhooks"],
+        "operationId": "editHook",
+        "summary": "Изменить webhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/EditHook" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WebhookApiResponse" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "OAuth2 access token организатора: `Authorization: Bearer <token>`"
+      }
+    },
+    "schemas": {
+      "Introspect": {
+        "type": "object",
+        "description": "Информация о владельце токена",
+        "properties": {
+          "active": { "type": "boolean" },
+          "client_id": { "type": "string" },
+          "user_id": { "type": "string" },
+          "user_email": { "type": "string" },
+          "organizations": { "type": "array", "items": { "$ref": "#/components/schemas/OrganizationResponse" } }
+        }
+      },
+      "EventsResponse": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "values": { "type": "array", "items": { "$ref": "#/components/schemas/EventResponse" } }
+        }
+      },
+      "CreateEvent": {
+        "type": "object",
+        "description": "Описание создаваемого события",
+        "required": ["organization", "name", "starts_at"],
+        "properties": {
+          "organization": { "$ref": "#/components/schemas/OrganizationInclude" },
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" },
+          "name": { "type": "string" },
+          "description_short": { "type": "string" },
+          "description_html": { "type": "string" },
+          "categories": { "type": "array", "items": { "$ref": "#/components/schemas/CategoryInclude" } },
+          "location": { "$ref": "#/components/schemas/LocationInclude" },
+          "poster_image_url": { "type": "string" },
+          "properties": { "type": "array", "items": { "type": "string" } },
+          "custom": { "type": "object", "additionalProperties": true },
+          "questions": { "type": "array", "items": { "$ref": "#/components/schemas/QuestionInclude" } },
+          "access_status": { "type": "string", "enum": ["private", "draft", "link_only", "public"] },
+          "ticket_types": { "type": "array", "items": { "$ref": "#/components/schemas/TicketTypeRequest" } }
+        }
+      },
+      "EditEvent": {
+        "type": "object",
+        "description": "Изменяемые поля события",
+        "properties": {
+          "ticket_types": { "type": "array", "items": { "$ref": "#/components/schemas/TicketTypeRequest" } },
+          "name": { "type": "string" },
+          "description_short": { "type": "string" },
+          "description_html": { "type": "string" },
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" },
+          "categories": { "type": "array", "items": { "$ref": "#/components/schemas/CategoryInclude" } },
+          "location": { "$ref": "#/components/schemas/LocationInclude" },
+          "poster_image_url": { "type": "string" },
+          "properties": { "type": "array", "items": { "type": "string" } },
+          "custom": { "type": "object", "additionalProperties": true },
+          "questions": { "type": "array", "items": { "$ref": "#/components/schemas/QuestionInclude" } },
+          "access_status": { "type": "string", "enum": ["private", "draft", "link_only", "public"] }
+        }
+      },
+      "EventResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" },
+          "name": { "type": "string" },
+          "description_short": { "type": "string" },
+          "description_html": { "type": "string" },
+          "url": { "type": "string" },
+          "poster_image": { "$ref": "#/components/schemas/ImageResponse" },
+          "ad_partner_percent": { "type": "integer" },
+          "locale": { "type": "string" },
+          "location": { "$ref": "#/components/schemas/LocationResponse" },
+          "organization": { "$ref": "#/components/schemas/OrganizationResponse" },
+          "categories": { "type": "array", "items": { "$ref": "#/components/schemas/CategoryResponse" } },
+          "ticket_types": { "type": "array", "items": { "$ref": "#/components/schemas/TicketTypeResponse" } },
+          "questions": { "type": "array", "items": { "$ref": "#/components/schemas/QuestionResponse" } },
+          "widgets": { "type": "array", "items": { "$ref": "#/components/schemas/WidgetResponse" } },
+          "properties": { "type": "array", "items": { "type": "string" } },
+          "moderation_status": { "type": "string" },
+          "access_status": { "type": "string" },
+          "registration_data": { "$ref": "#/components/schemas/RegistrationDataResponse" }
+        }
+      },
+      "OrganizationInclude": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "integer" },
+          "subdomain": { "type": "string" }
+        }
+      },
+      "OrganizationResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description_html": { "type": "string" },
+          "url": { "type": "string" },
+          "logo_image": { "$ref": "#/components/schemas/ImageResponse" },
+          "subdomain": { "type": "string" },
+          "permissions": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "CreateOrganization": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "subdomain": { "type": "string" },
+          "phone": { "type": "string" }
+        }
+      },
+      "LocationInclude": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string" },
+          "address": { "type": "string" }
+        }
+      },
+      "LocationResponse": {
+        "type": "object",
+        "properties": {
+          "country": { "type": "string" },
+          "city": { "type": "string" },
+          "address": { "type": "string" },
+          "coordinates": { "type": "array", "items": { "type": "number" } }
+        }
+      },
+      "CategoryInclude": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      },
+      "CategoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      },
+      "ImageResponse": {
+        "type": "object",
+        "properties": {
+          "default_url": { "type": "string" },
+          "uploadcare_url": { "type": "string" }
+        }
+      },
+      "TicketTypeRequest": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "price": { "type": "integer" },
+          "status": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "sale_starts_at": { "type": "string", "format": "date-time" },
+          "sale_ends_at": { "type": "string", "format": "date-time" },
+          "limit": { "type": "integer" }
+        }
+      },
+      "TicketTypeResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "buy_amount_min": { "type": "number" },
+          "buy_amount_max": { "type": "number" },
+          "price": { "type": "number" },
+          "is_promocode_locked": { "type": "boolean" },
+          "remaining": { "type": "integer" },
+          "sale_ends_at": { "type": "string", "format": "date-time" },
+          "sale_starts_at": { "type": "string", "format": "date-time" },
+          "public_key": { "type": "string" },
+          "is_active": { "type": "boolean" },
+          "ad_partner_profit": { "type": "number" },
+          "sold": { "type": "number" },
+          "attended": { "type": "number" },
+          "limit": { "type": "number" },
+          "status": { "type": "string" }
+        }
+      },
+      "QuestionInclude": {
+        "type": "object",
+        "properties": {
+          "field_id": { "type": "string" },
+          "is_mandatory": { "type": "boolean" },
+          "status": { "type": "string" },
+          "name": { "type": "string" },
+          "comment": { "type": "string" },
+          "type": { "type": "string" },
+          "possible_answers": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "QuestionResponse": {
+        "type": "object",
+        "properties": {
+          "field_id": { "type": "integer" },
+          "name": { "type": "string" },
+          "comment": { "type": "string" },
+          "type": { "type": "string" },
+          "possible_answers": { "type": "array", "items": { "$ref": "#/components/schemas/AnswerResponse" } },
+          "is_mandatory": { "type": "boolean" },
+          "is_for_every_visitor": { "type": "boolean" },
+          "meta": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "AnswerResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      },
+      "WidgetResponse": {
+        "type": "object",
+        "properties": {
+          "code_html": { "type": "string" }
+        }
+      },
+      "RegistrationDataResponse": {
+        "type": "object",
+        "properties": {
+          "price_max": { "type": "number" },
+          "price_min": { "type": "number" },
+          "sale_ends_at": { "type": "string", "format": "date-time" },
+          "tickets_total": { "type": "integer" },
+          "tickets_limit": { "type": "integer" },
+          "is_registration_open": { "type": "boolean" }
+        }
+      },
+      "RegistrationOrdersResponse": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer" },
+          "values": { "type": "array", "items": { "$ref": "#/components/schemas/RegistrationOrderResponse" } }
+        }
+      },
+      "RegistrationOrderResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "created_at": { "type": "string", "format": "date-time" },
+          "status": { "$ref": "#/components/schemas/OrderStatusResponse" },
+          "payment": { "$ref": "#/components/schemas/PaymentResponse" },
+          "tickets": { "type": "array", "items": { "$ref": "#/components/schemas/TicketResponse" } },
+          "answers": { "type": "object", "additionalProperties": { "type": "string" } },
+          "promocodes": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "OrderStatusResponse": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      },
+      "PaymentResponse": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "number" },
+          "paid_at": { "type": "string", "format": "date-time" },
+          "payment_type": { "type": "string" }
+        }
+      },
+      "TicketResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "number": { "type": "string" },
+          "answers": { "type": "object", "additionalProperties": { "type": "string" } },
+          "ticket_type": { "$ref": "#/components/schemas/TicketTypeResponse" },
+          "attendance": { "$ref": "#/components/schemas/AttendanceResponse" },
+          "place": { "$ref": "#/components/schemas/PlaceResponse" },
+          "codes": { "$ref": "#/components/schemas/CodesResponse" }
+        }
+      },
+      "AttendanceResponse": {
+        "type": "object",
+        "properties": {
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PlaceResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "description": { "type": "object", "additionalProperties": true }
+        }
+      },
+      "CodesResponse": {
+        "type": "object",
+        "properties": {
+          "ean13": { "type": "string" },
+          "ean8": { "type": "string" },
+          "printed_code": { "type": "string" }
+        }
+      },
+      "CreateOrder": {
+        "type": "object",
+        "description": "Описание создаваемого заказа",
+        "properties": {
+          "tickets": { "type": "array", "items": { "$ref": "#/components/schemas/TicketInclude" } },
+          "answers": { "type": "object", "additionalProperties": { "type": "string" } },
+          "promocodes": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "TicketInclude": {
+        "type": "object",
+        "properties": {
+          "answers": { "type": "object", "additionalProperties": true },
+          "ticket_type_id": { "type": "string" }
+        }
+      },
+      "EditOrder": {
+        "type": "object",
+        "properties": {
+          "visitors": { "type": "array", "items": { "$ref": "#/components/schemas/EditOrderVisitors" } },
+          "answers": { "type": "object", "additionalProperties": true },
+          "payment": { "$ref": "#/components/schemas/EditOrderPayment" }
+        }
+      },
+      "EditOrderVisitors": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "answers": { "type": "object", "additionalProperties": { "type": "string" } },
+          "attendance": { "$ref": "#/components/schemas/EditOrderAttendance" }
+        }
+      },
+      "EditOrderPayment": {
+        "type": "object",
+        "properties": {
+          "paid_at": { "type": "string", "format": "date-time" },
+          "amount": { "type": "number" },
+          "payment_type": { "type": "string" }
+        }
+      },
+      "EditOrderAttendance": {
+        "type": "object",
+        "properties": {
+          "starts_at": { "type": "string", "format": "date-time" },
+          "ends_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "WebhooksApiResponse": {
+        "type": "object",
+        "properties": {
+          "values": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookApiResponse" } }
+        }
+      },
+      "WebhookApiResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "organization": { "type": "integer" },
+          "url": { "type": "string" },
+          "type": { "type": "string" },
+          "secret": { "type": "string" }
+        }
+      },
+      "CreateHook": {
+        "type": "object",
+        "required": ["url", "type"],
+        "properties": {
+          "url": { "type": "string" },
+          "secret": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      },
+      "EditHook": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "secret": { "type": "string" }
+        }
+      }
+    }
+  }
+}
