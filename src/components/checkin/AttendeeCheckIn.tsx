@@ -1,6 +1,14 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useAttendees } from './useAttendees';
+import { useTimepadCredentials } from './useTimepadCredentials';
+import { TimepadAuthForm } from './TimepadAuthForm';
 import type { Attendee, ReviewRecord } from './model';
+
+function maskToken(token: string): string {
+  if (!token) return '';
+  if (token.length <= 8) return '••••';
+  return `${token.slice(0, 4)}…${token.slice(-4)}`;
+}
 
 /** Порог свайпа в пикселях, после которого решение засчитывается. */
 const SWIPE_THRESHOLD = 110;
@@ -192,7 +200,13 @@ const Results: React.FC<ResultsProps> = ({ records, total, onRestart }) => {
 };
 
 export const AttendeeCheckIn: React.FC = () => {
-  const { attendees, loading, source, error } = useAttendees();
+  const { credentials, save, clear, ready } = useTimepadCredentials();
+  const [showAuth, setShowAuth] = useState(!ready);
+
+  const { attendees, loading, error, reload } = useAttendees({
+    token: credentials.token,
+    eventId: credentials.eventId
+  });
 
   const [index, setIndex] = useState(0);
   const [records, setRecords] = useState<ReviewRecord[]>([]);
@@ -298,15 +312,53 @@ export const AttendeeCheckIn: React.FC = () => {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-end">
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            source === 'timepad' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-          }`}
-        >
-          {source === 'timepad' ? 'Данные из Timepad' : 'Образцы'}
-        </span>
+      {/* Статус подключения / авторизация */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        {ready ? (
+          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+            <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
+              Подключено
+            </span>
+            <span>
+              событие <span className="font-medium text-gray-800">{credentials.eventId}</span>
+            </span>
+            <span className="text-gray-400">токен {maskToken(credentials.token)}</span>
+          </div>
+        ) : (
+          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+            Не авторизовано · образцы
+          </span>
+        )}
+
+        <div className="flex items-center gap-3 text-sm">
+          {ready && (
+            <button onClick={reload} className="text-blue-600 hover:underline">
+              Обновить
+            </button>
+          )}
+          <button onClick={() => setShowAuth(s => !s)} className="text-blue-600 hover:underline">
+            {showAuth ? 'Свернуть' : ready ? 'Сменить доступ' : 'Авторизация'}
+          </button>
+        </div>
       </div>
+
+      {showAuth && (
+        <TimepadAuthForm
+          initial={credentials}
+          onSave={next => {
+            save(next);
+            setShowAuth(false);
+            setIndex(0);
+            setRecords([]);
+          }}
+          onClear={() => {
+            clear();
+            setIndex(0);
+            setRecords([]);
+          }}
+          onCancel={ready ? () => setShowAuth(false) : undefined}
+        />
+      )}
 
       {error && (
         <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
